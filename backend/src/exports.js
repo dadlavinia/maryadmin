@@ -1,7 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import ExcelJS from 'exceljs';
-import PDFDocument from 'pdfkit';
 const fontFile=name=>{
  const candidates=[path.resolve(process.cwd(),'assets/fonts',name),path.resolve(process.cwd(),'backend/assets/fonts',name)];
  const match=candidates.find(file=>fs.existsSync(file));
@@ -40,6 +39,7 @@ export async function excelBuffer(report,currency='KES') {
  criteria.getRow(1).font={bold:true,size:16,color:{argb:'FF153E44'}};criteria.getRow(1).height=30;criteria.eachRow((row,n)=>{row.alignment={vertical:'top',wrapText:true};if(n>1&&n%2===0)row.eachCell(c=>c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF4F8F3'}});});sheet.pageSetup={paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0};sheet.headerFooter.oddFooter='Mary Collections | '+currency+' | Page &P of &N';return Buffer.from(await wb.xlsx.writeBuffer());
 }
 export async function pdfBuffer(report,currency='KES') {
+ const {default:PDFDocument}=await import('pdfkit');
  return new Promise((resolve,reject)=>{
  const doc=new PDFDocument({size:'A4',layout:'landscape',margin:32,bufferPages:true});const chunks=[];doc.on('data',b=>chunks.push(b));doc.on('end',()=>resolve(Buffer.concat(chunks)));doc.on('error',reject);
  doc.registerFont('Body',fontFile('DejaVuSans.ttf'));doc.registerFont('Heading',fontFile('DejaVuSans-Bold.ttf'));
