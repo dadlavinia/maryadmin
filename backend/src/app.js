@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import {rateLimit} from 'express-rate-limit';
+import {rateLimit,ipKeyGenerator} from 'express-rate-limit';
 import multer from 'multer';
 import {createClient} from '@supabase/supabase-js';
 import path from 'node:path';
@@ -18,7 +18,17 @@ export function createApp(config,{clientFactory=createClient}={}) {
  app.use(cors({origin:(origin,cb)=>cb(null,!origin||allowed.includes(origin)),allowedHeaders:['Authorization','Content-Type','X-Organization-Id'],methods:['GET','POST','PUT']}));
  app.use(express.json({limit:'256kb'}));
  app.use('/api',(_req,res,next)=>{res.setHeader('Cache-Control','no-store');next();});
- app.use('/api',rateLimit({windowMs:60*1000,limit:120,standardHeaders:'draft-8',legacyHeaders:false}));
+ app.use('/api',rateLimit({
+  windowMs:60*1000,
+  limit:120,
+  standardHeaders:'draft-8',
+  legacyHeaders:false,
+  keyGenerator:(req)=>{
+   const forwarded=String(req.get('x-forwarded-for')||'').split(',')[0].trim();
+   const raw=req.get('x-nf-client-connection-ip')||forwarded||req.ip||req.socket?.remoteAddress||'unknown';
+   return ipKeyGenerator(String(raw));
+  }
+ }));
  app.get('/health',(_req,res)=>res.json({status:'ok',service:'mary-collections-api',configured:!!config.supabaseUrl&&!!config.supabaseKey}));
  app.get('/api/config',(_req,res)=>res.json({supabaseUrl:config.supabaseUrl,supabaseKey:config.supabaseKey}));
  const rpc=async(req,name,args={})=>{const {data,error}=await req.db.rpc(name,{p_org:req.org,...args});if(error)throw dbError(error);return data;};
