@@ -4,7 +4,6 @@ import helmet from 'helmet';
 import {rateLimit} from 'express-rate-limit';
 import multer from 'multer';
 import {createClient} from '@supabase/supabase-js';
-import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
 import {AppError,requireUuid,customerData,invoiceData,paymentData,filters,version,text} from './validation.js';
@@ -78,8 +77,8 @@ export function createApp(config,{clientFactory=createClient}={}) {
  app.get('/api/history/actors',async(req,res)=>res.json(await rpc(req,'mc_history_actors')));
  app.get('/api/team',async(req,res)=>res.json(await rpc(req,'mc_team')));
  app.post('/api/team',async(req,res)=>res.json(await rpc(req,'mc_save_member',{p_email:text(req.body.email,'Email',254,{required:true}),p_role:req.body.role,p_active:req.body.active!==false})));
- const dist=path.resolve(fileURLToPath(new URL('../../admin/dist',import.meta.url)));
- if(fs.existsSync(dist)){app.use(express.static(dist,{maxAge:config.production?'1h':0}));app.get('/',(_req,res)=>res.sendFile(path.join(dist,'index.html')));}
+ const dist=[path.resolve(process.cwd(),'../admin/dist'),path.resolve(process.cwd(),'admin/dist')].find(candidate=>fs.existsSync(candidate));
+ if(dist){app.use(express.static(dist,{maxAge:config.production?'1h':0}));app.get('/',(_req,res)=>res.sendFile(path.join(dist,'index.html')));}
  app.use((_req,res)=>res.status(404).json({error:'Page not found'}));
  app.use((error,_req,res,_next)=>{const status=error.code==='LIMIT_FILE_SIZE'?413:error.status||400;res.status(status).json({error:error.code==='LIMIT_FILE_SIZE'?'File exceeds 5 MB':error.message||'Request failed'});});
  return app;

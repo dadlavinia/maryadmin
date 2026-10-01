@@ -1,6 +1,13 @@
-import {fileURLToPath} from 'node:url';
+import path from 'node:path';
+import fs from 'node:fs';
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
+const fontFile=name=>{
+ const candidates=[path.resolve(process.cwd(),'assets/fonts',name),path.resolve(process.cwd(),'backend/assets/fonts',name)];
+ const match=candidates.find(file=>fs.existsSync(file));
+ if(!match)throw new Error(`Missing PDF font: ${name}`);
+ return match;
+};
 export const columnSets={
  invoices:[['internal_number','Invoice ID'],['external_number','Source invoice'],['customer_code','Customer code'],['customer_name','Customer'],['invoice_date','Invoice date'],['due_date','Due date'],['amount','Invoiced'],['paid_amount','Collected'],['balance','Outstanding'],['payment_status','Payment status'],['due_status','Due status'],['overdue_days','Overdue days'],['operation_status','Action status'],['notes','Notes']],
  payments:[['internal_number','Invoice ID'],['external_number','Source invoice'],['customer_name','Customer'],['payment_date','Payment date'],['amount','Amount'],['method','Method'],['reference','Reference'],['notes','Notes'],['created_at','Recorded at'],['recorded_by','Recorded by'],['reversed_at','Reversed at'],['reversal_reason','Reversal reason']],
@@ -35,7 +42,7 @@ export async function excelBuffer(report,currency='KES') {
 export async function pdfBuffer(report,currency='KES') {
  return new Promise((resolve,reject)=>{
  const doc=new PDFDocument({size:'A4',layout:'landscape',margin:32,bufferPages:true});const chunks=[];doc.on('data',b=>chunks.push(b));doc.on('end',()=>resolve(Buffer.concat(chunks)));doc.on('error',reject);
- doc.registerFont('Body',fileURLToPath(new URL('../assets/fonts/DejaVuSans.ttf',import.meta.url)));doc.registerFont('Heading',fileURLToPath(new URL('../assets/fonts/DejaVuSans-Bold.ttf',import.meta.url)));
+ doc.registerFont('Body',fontFile('DejaVuSans.ttf'));doc.registerFont('Heading',fontFile('DejaVuSans-Bold.ttf'));
  const w=doc.page.width-64;let y=24;doc.rect(0,0,doc.page.width,67).fill('#153e44');
  const line=(text,size=9,color='#33454a')=>{doc.font('Body').fontSize(size).fillColor(color).text(String(text),32,y,{width:w});y=doc.y+8;};
  line('Mary Collections',20,'#ffffff');y=80;line(`${report.kind.toUpperCase()} REPORT | ${currency} | ${report.as_of_date}`,11);line(`Applied: ${report.created_at} | Report: ${report.id}`,8);
