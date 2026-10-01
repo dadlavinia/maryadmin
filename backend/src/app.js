@@ -12,7 +12,8 @@ import {csvBuffer,excelBuffer,pdfBuffer,plainCsv} from './exports.js';
 const upload=multer({storage:multer.memoryStorage(),limits:{fileSize:5*1024*1024,files:1,fields:2}});
 export function createApp(config,{clientFactory=createClient}={}) {
  const app=express();app.disable('x-powered-by');
- app.use(helmet({contentSecurityPolicy:{directives:{defaultSrc:["'self'"],scriptSrc:["'self'"],styleSrc:["'self'","'unsafe-inline'"],fontSrc:["'self'"],imgSrc:["'self'","data:"],connectSrc:["'self'",...(config.supabaseUrl?[new URL(config.supabaseUrl).origin]:[])],objectSrc:["'none'"],frameAncestors:["'none'"],upgradeInsecureRequests:config.production?[]:null}}}));
+ const supabaseOrigin=(()=>{try{return config.supabaseUrl?new URL(config.supabaseUrl).origin:null;}catch{return null;}})();
+ app.use(helmet({contentSecurityPolicy:{directives:{defaultSrc:["'self'"],scriptSrc:["'self'"],styleSrc:["'self'","'unsafe-inline'"],fontSrc:["'self'"],imgSrc:["'self'","data:"],connectSrc:["'self'",...(supabaseOrigin?[supabaseOrigin]:[])],objectSrc:["'none'"],frameAncestors:["'none'"],upgradeInsecureRequests:config.production?[]:null}}}));
  const allowed=config.allowedOrigins||[];
  app.use(cors({origin:(origin,cb)=>cb(null,!origin||allowed.includes(origin)),allowedHeaders:['Authorization','Content-Type','X-Organization-Id'],methods:['GET','POST','PUT']}));
  app.use(express.json({limit:'256kb'}));
