@@ -1,0 +1,9 @@
+{
+  "name": "mary-collections-netlify-functions",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "serverless-http": "4.0.0"
+  }
+}

@@ -1,0 +1,10 @@
+MARY COLLECTIONS - UI AND OVERVIEW UPDATE
+
+1. Close the Mary Collections server command window.
+2. Extract the ZIP into D:\, merge mary-collections and replace matching files.
+3. Keep D:\mary-collections\backend\.env.
+4. Open database\004_filtered_overview.sql in Notepad. Paste its contents into Supabase SQL Editor and run it once.
+5. Run START.cmd from D:\mary-collections.
+6. Open http://127.0.0.1:4000 and press Ctrl+F5.
+
+The updated admin is already built. Rebuilding on Windows is unnecessary.
